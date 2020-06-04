@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import Dropdown from "react-dropdown";
 import parse from "html-react-parser";
 
 import { formatSeasons } from "./utils/formatSeasons";
+import { fetchShow } from "./api/fetchShow";
 
 import Episodes from "./components/Episodes";
 import "./styles.css";
@@ -15,21 +15,20 @@ export default function App() {
   const episodes = seasons[selectedSeason] || [];
 
   useEffect(() => {
-    const fetchShow = () => {
-      axios
-        .get(
-          "https://api.tvmaze.com/singlesearch/shows?q=stranger-things&embed=episodes"
-        )
-        .then(res => {
-          setShow(res.data);
-          setSeasons(formatSeasons(res.data._embedded.episodes));
-        });
-    };
-    fetchShow();
+    fetchShow()
+      .then(data => {
+        console.log(data)
+        setShow(data);
+        setSeasons(formatSeasons(data._embedded.episodes));
+      })
+      .catch(err => console.log(err.message));
+
+    
   }, []);
 
   const handleSelect = e => {
-    setSelectedSeason(e.value);
+    console.log(e.target.value)
+    setSelectedSeason(e.target.value);
   };
 
   if (!show) {
@@ -41,12 +40,17 @@ export default function App() {
       <img className="poster-img" src={show.image.original} alt={show.name} />
       <h1>{show.name}</h1>
       {parse(show.summary)}
-      <Dropdown
+
+      <select className = "Dropdown-root" data-testid = "selectedSeason" id = "selectedSeason" name = "selectedSeason" value = {selectedSeason} onChange = {handleSelect}>
+        <option className = "Dropdown-option" value = "">Select a season</option> 
+        {Object.keys(seasons).map(season => <option className = "Dropdown-option" key = {season} value = {season}>{season}</option>)}
+      </select>
+      {/* <Dropdown
         options={Object.keys(seasons)}
         onChange={handleSelect}
         value={selectedSeason || "Select a season"}
         placeholder="Select an option"
-      />
+      /> */}
       <Episodes episodes={episodes} />
     </div>
   );
